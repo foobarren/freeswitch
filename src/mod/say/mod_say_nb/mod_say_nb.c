@@ -83,8 +83,8 @@ static switch_status_t play_group(switch_say_method_t method, switch_say_gender_
 			if ( a > 1 && b == 0 && c == 0) {	/* [2-9]00 */
 				switch_say_file(sh, "digits/%d", a); //to till ni
 			}
+            // File is unavailable but will probably not be needed
 			switch_say_file(sh, "digits/r-100"); //hundrede 
-			//TODO: missing if we're ever going to need it
 		} else {
 			if (a == 1) {	/* 1xx */
 				switch_say_file(sh, "digits/n-1"); //ett
@@ -121,9 +121,9 @@ static switch_status_t play_group(switch_say_method_t method, switch_say_gender_
 					switch_say_file(sh, "digits/r-1"); //forsta
 				} else {
 					if (gender == SSG_UTRUM) {
-						switch_say_file(sh, "digits/u-1"); //ett
+						switch_say_file(sh, "digits/u-1"); //en
 					} else {
-						switch_say_file(sh, "digits/n-1"); //en
+						switch_say_file(sh, "digits/n-1"); //ett
 					}
 				}
 			}
@@ -190,18 +190,22 @@ static switch_status_t nb_say_general_count(switch_say_file_handle_t *sh, char *
 		switch (say_args->method) {
                 case SSM_PRONOUNCED_YEAR:
                         {
-                                int num = atoi(tosay);
-                                int a = num / 100;
-                                int b = num % 100;
+                                // Try to play recording of year in it's entirety first
+                                // If not successful, play year spelled out instead
+                                // For possible return values, see switch_types.h:1170
+                                if (switch_say_file(sh, "time/%s", tosay) != SWITCH_STATUS_SUCCESS) {
+                                    int num = atoi(tosay);
+                                    int a = num / 100;
+                                    int b = num % 100;
 
-                                if (!b || !(a % 10)) {
-                                        say_num(sh, num, SSM_PRONOUNCED);
-                                        return SWITCH_STATUS_SUCCESS;
+                                    if (!b || !(a % 10)) {
+                                            say_num(sh, num, SSM_PRONOUNCED);
+                                            return SWITCH_STATUS_SUCCESS;
+                                    }
+
+                                    say_num(sh, a, SSM_PRONOUNCED);
+                                    say_num(sh, b, SSM_PRONOUNCED);
                                 }
-
-                                say_num(sh, a, SSM_PRONOUNCED);
-                                say_num(sh, b, SSM_PRONOUNCED);
-
                                 return SWITCH_STATUS_SUCCESS;
                         }
                         break;
